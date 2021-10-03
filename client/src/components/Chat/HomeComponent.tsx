@@ -8,6 +8,7 @@ import { io } from "socket.io-client";
 const HomeComponent = () => {
   const [username, setUsername] = useState("");
   const [userId, setUserId] = useState("");
+  const [token, setToken] = useState("");
   const [newRoomModal, setNewRoomModal] = useState(false);
   const [newRoomName, setNewRoomName] = useState("");
   const [rooms, setRooms] = useState<{ id: number; name: string }[]>([]);
@@ -38,7 +39,6 @@ const HomeComponent = () => {
   });
 
   socket.once("recieve-room", ({ result, body }) => {
-    console.log("recieving in homepage");
     if (body) {
       if ("added" in body) {
         const { added } = body;
@@ -59,17 +59,18 @@ const HomeComponent = () => {
   });
 
   useEffect(() => {
-    if (userId) {
-      socket.emit("get-room", { userId, body: { added: false, by: "" } });
+    if (userId && token) {
+      socket.emit("get-room", { token, userId, body: { added: false, by: "" } });
       return () => {
         setRooms([]);
       };
     }
-  }, [userId]);
+  }, [userId, token]);
 
   setTimeout(() => {
     setUsername(localStorage.getItem("username")!);
     setUserId(localStorage.getItem("userId")!);
+    setToken(localStorage.getItem("tokenId")!);
   }, 1000);
 
   const handleInputChange = (e: React.FormEvent<HTMLInputElement>) => {
@@ -92,13 +93,15 @@ const HomeComponent = () => {
         {
           headers: {
             "Content-Type": "application/json",
+            authorization: `Bearer ${token}`,
           },
         }
       );
-      socket.emit("get-room", { userId });
+      socket.emit("get-room", { token, userId });
       setNewRoomName("");
       setNewRoomModal(false);
     } catch (err: any) {
+      console.log(err);
       if (err && err.response) {
         setError({ isError: true, message: err.response.data.message });
       }

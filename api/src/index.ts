@@ -5,9 +5,12 @@ import * as dotenv from "dotenv";
 import authRoute from "./routes/auth";
 import roomRoute from "./routes/room";
 import chatRoute from "./routes/chat";
+
 import { json } from "body-parser";
 import http from "http";
 import socketConnection from "./utils/socket-io";
+
+import { verifyToken } from "./middlewares/auth-middleware";
 
 const cors = require("cors");
 const app = express();
@@ -21,13 +24,14 @@ const router = express.Router();
 
 dotenv.config({ path: path.resolve(__dirname, "..") + "/.env" });
 
-app.get("/", (req, res) => {
-  res.send("hi there");
-});
-
 app.use("/api/auth", authRoute);
+app.use(verifyToken);
 app.use("/api/room", roomRoute);
 app.use("/api/chat", chatRoute);
+
+app.all("*", () => {
+  throw new Error("Route not available");
+});
 
 // start the db
 const start = async () => {
@@ -44,7 +48,7 @@ const start = async () => {
   }
 };
 
-server.listen(4000, () => {
+server.listen(process.env.PORT || 4000, () => {
   console.log("Listening on port 4000!!");
 
   start();

@@ -2,6 +2,7 @@ import express from "express";
 import { Room } from "../models/Room";
 import path from "path";
 import * as dotenv from "dotenv";
+const jwt = require("jsonwebtoken");
 const router = express.Router();
 
 dotenv.config({ path: path.resolve(__dirname, "../..") + "/.env" });
@@ -21,6 +22,7 @@ router.post("/newRoom", async (req, res) => {
 
     res.status(200).json({ message: "Success" });
   } catch (err: any) {
+    console.log(err);
     return res.status(500).json(err);
   }
 });

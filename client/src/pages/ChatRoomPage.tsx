@@ -11,6 +11,7 @@ const { Search } = Input;
 const ChatRoomPage = () => {
   const [userId, setUserId] = useState("");
   const [username, setUsername] = useState("");
+  const [token, setToken] = useState("");
   const [messages, setMessages] = useState<{ username: string; userId: string; message: string; _v: string }[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [users, setUsers] = useState<{ id: string; email: string }[]>([]);
@@ -44,7 +45,7 @@ const ChatRoomPage = () => {
   }, [chatContainerRef, messages]);
 
   const fetchMessages = () => {
-    socket.emit("get-message", { roomId: id });
+    socket.emit("get-message", { token, roomId: id });
     socket.on("recieve-message", (result) => {
       console.log("recieving in chatRoom");
       setMessages(result.conversations);
@@ -52,13 +53,14 @@ const ChatRoomPage = () => {
   };
 
   useEffect(() => {
-    if (userId) {
+    if (userId && token) {
       fetchMessages();
     }
-  }, [userId]);
+  }, [userId, token]);
   setTimeout(() => {
     setUserId(localStorage.getItem("userId")!);
     setUsername(localStorage.getItem("username")!);
+    setToken(localStorage.getItem("tokenId")!);
   }, 1000);
 
   useEffect(() => {
@@ -69,26 +71,34 @@ const ChatRoomPage = () => {
 
   const handleAddUser = () => {
     if (currentUserSelected) {
-      socket.emit("add-member-room", { userId: currentUserSelected, roomId: id, by: username });
+      socket.emit("add-member-room", { token, userId: currentUserSelected, roomId: id, by: username });
     }
     setModalVisibility("add", false);
   };
 
   const handleDeleteUser = () => {
     if (currentUserSelected) {
-      socket.emit("remove-member-room", { userId: currentUserSelected, roomId: id, by: username });
+      socket.emit("remove-member-room", { token, userId: currentUserSelected, roomId: id, by: username });
     }
     setModalVisibility("delete", false);
   };
 
   const fetchAddUsers = async () => {
-    const response = await axios.get(`http://localhost:4000/api/chat/getUserToAdd/${id}`);
+    const response = await axios.get(`http://localhost:4000/api/chat/getUserToAdd/${id}`, {
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
+    });
     setUsers(response.data.user.filter((user: { id: string; email: string }) => user.id !== userId));
     return;
   };
 
   const fetchDeleteUsers = async () => {
-    const response = await axios.get(`http://localhost:4000/api/chat/getUserToDelete/${id}`);
+    const response = await axios.get(`http://localhost:4000/api/chat/getUserToDelete/${id}`, {
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
+    });
     console.log(response.data, userId);
     setUsers(response.data.user.filter((user: { id: string; email: string }) => user.id !== userId));
   };
@@ -163,7 +173,7 @@ const ChatRoomPage = () => {
   };
 
   const handleNewMessageInput = async () => {
-    await socket.emit("post-message", { message: inputMessage, userId, username, roomId: id });
+    await socket.emit("post-message", { token, message: inputMessage, userId, username, roomId: id });
     setInputMessage("");
   };
 

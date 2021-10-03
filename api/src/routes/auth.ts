@@ -13,7 +13,7 @@ const getToken = (email: string): string => {
   const payload = { email };
   const secret = process.env.SECRET_KEY!;
   const token = jwt.sign(payload, secret, {
-    expiresIn: EXPIRESIN,
+    expiresIn: +EXPIRESIN,
   });
   return token;
 };

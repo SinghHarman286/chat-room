@@ -16,16 +16,20 @@ const socketConnection = (server: http.Server) => {
       currentUser[userId] = socketId;
       socket.join(socketId);
     });
-    socket.once("get-room", async ({ userId, body }) => {
+    socket.once("get-room", async ({ token, userId, body }) => {
       try {
-        const response = await axios.get(`http://localhost:4000/api/room/getRoom/${userId}`);
+        const response = await axios.get(`http://localhost:4000/api/room/getRoom/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         socket.emit("recieve-room", { result: response.data, body: body });
       } catch (err) {
-        socket.emit("recieve-room", []);
+        socket.emit("recieve-room", { result: { rooms: [] }, body: body });
       }
     });
 
-    socket.once("add-member-room", async ({ userId, roomId, by }) => {
+    socket.once("add-member-room", async ({ token, userId, roomId, by }) => {
       try {
         const response = await axios.post(
           "http://localhost:4000/api/room/addMember",
@@ -36,17 +40,21 @@ const socketConnection = (server: http.Server) => {
           {
             headers: {
               "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
             },
           }
         );
-        const newRoomsRes = await axios.get(`http://localhost:4000/api/room/getRoom/${userId}`);
+        const newRoomsRes = await axios.get(`http://localhost:4000/api/room/getRoom/${userId}`, {
+          headers: {
+            authorization: `Bearer ${token}`,
+          },
+        });
         io.to(currentUser[userId]).emit("recieve-room", { result: newRoomsRes.data, body: { added: true, by } });
       } catch (err) {}
     });
 
-    socket.once("remove-member-room", async ({ userId, roomId, by }) => {
+    socket.once("remove-member-room", async ({ token, userId, roomId, by }) => {
       try {
-        console.log(userId, roomId, by);
         const response = await axios.post(
           "http://localhost:4000/api/room/deleteMember",
           {
@@ -57,23 +65,32 @@ const socketConnection = (server: http.Server) => {
           {
             headers: {
               "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
             },
           }
         );
 
-        const newRoomsRes = await axios.get(`http://localhost:4000/api/room/getRoom/${userId}`);
+        const newRoomsRes = await axios.get(`http://localhost:4000/api/room/getRoom/${userId}`, {
+          headers: {
+            authorization: `Bearer ${token}`,
+          },
+        });
         io.to(currentUser[userId]).emit("recieve-room", { result: newRoomsRes.data, body: { removed: true, by } });
       } catch (err) {}
     });
 
-    socket.once("get-message", async ({ roomId }) => {
+    socket.once("get-message", async ({ token, roomId }) => {
       try {
-        const response = await axios.get(`http://localhost:4000/api/chat/getChat/${roomId}`);
+        const response = await axios.get(`http://localhost:4000/api/chat/getChat/${roomId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         io.emit("recieve-message", response.data);
       } catch (err) {}
     });
 
-    socket.once("post-message", async ({ message, userId, username, roomId }: { message: string; userId: string; username: string; roomId: string }) => {
+    socket.once("post-message", async ({ token, message, userId, username, roomId }: { token: string; message: string; userId: string; username: string; roomId: string }) => {
       try {
         const response = await axios.post(
           `http://localhost:4000/api/chat/newMessage`,
@@ -86,6 +103,7 @@ const socketConnection = (server: http.Server) => {
           {
             headers: {
               "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
             },
           }
         );
