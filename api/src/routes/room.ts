@@ -25,6 +25,21 @@ router.post("/newRoom", async (req, res) => {
   }
 });
 
+router.post("/deleteMember", async (req, res) => {
+  const { userId, roomId } = req.body;
+
+  if (!userId || !roomId) {
+    return res.status(403).json({ message: "Invalid Request" });
+  }
+  try {
+    await Room.findOneAndUpdate({ _id: roomId }, { $pull: { members: userId } });
+
+    res.status(200).json({ message: "Success" });
+  } catch (err: any) {
+    return res.status(500).json(err);
+  }
+});
+
 router.post("/addMember", async (req, res) => {
   const { userId, roomId } = req.body;
 

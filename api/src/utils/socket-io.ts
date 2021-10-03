@@ -9,27 +9,14 @@ const socketConnection = (server: http.Server) => {
     },
   });
 
-  // const checkAndSend = async (socket: Socket) => {
-  //   let sendResult = [];
-  //   let index = 1;
-  //   try {
-  //     const data = await fetchNewData();
-
-  //     for (let { id, filename } of data.rows) {
-  //       sendResult.push({ index, filename, import: id, delete: id });
-  //       index += 1;
-  //     }
-  //     io.emit("recieve-db", sendResult);
-  //   } catch (err) {
-  //     io.emit("recieve-db", []);
-  //   }
-  // };
+  const currentUser: { [userId: string]: string } = {};
 
   io.on("connection", (socket: Socket) => {
-    socket.on("join", ({ userId }) => {
-      socket.join(userId);
+    socket.on("join", ({ userId, socketId }) => {
+      currentUser[userId] = socketId;
+      socket.join(socketId);
     });
-    socket.on("get-room", async ({ userId, body }) => {
+    socket.once("get-room", async ({ userId, body }) => {
       try {
         const response = await axios.get(`http://localhost:4000/api/room/getRoom/${userId}`);
         socket.emit("recieve-room", { result: response.data, body: body });
@@ -38,9 +25,8 @@ const socketConnection = (server: http.Server) => {
       }
     });
 
-    socket.on("add-member-room", async ({ userId, roomId, by }) => {
+    socket.once("add-member-room", async ({ userId, roomId, by }) => {
       try {
-        console.log("in socket");
         const response = await axios.post(
           "http://localhost:4000/api/room/addMember",
           {
@@ -54,21 +40,40 @@ const socketConnection = (server: http.Server) => {
           }
         );
         const newRoomsRes = await axios.get(`http://localhost:4000/api/room/getRoom/${userId}`);
-        console.log("emitting");
-        io.to(userId).emit("recieve-room", { result: newRoomsRes.data, body: { added: true, by } });
+        io.to(currentUser[userId]).emit("recieve-room", { result: newRoomsRes.data, body: { added: true, by } });
       } catch (err) {}
     });
 
-    socket.on("get-message", async ({ roomId }) => {
+    socket.once("remove-member-room", async ({ userId, roomId, by }) => {
+      try {
+        console.log(userId, roomId, by);
+        const response = await axios.post(
+          "http://localhost:4000/api/room/deleteMember",
+          {
+            userId,
+            roomId,
+            by,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        const newRoomsRes = await axios.get(`http://localhost:4000/api/room/getRoom/${userId}`);
+        io.to(currentUser[userId]).emit("recieve-room", { result: newRoomsRes.data, body: { removed: true, by } });
+      } catch (err) {}
+    });
+
+    socket.once("get-message", async ({ roomId }) => {
       try {
         const response = await axios.get(`http://localhost:4000/api/chat/getChat/${roomId}`);
         io.emit("recieve-message", response.data);
-      } catch (err) {
-        console.log(err);
-      }
+      } catch (err) {}
     });
 
-    socket.on("post-message", async ({ message, userId, username, roomId }: { message: string; userId: string; username: string; roomId: string }) => {
+    socket.once("post-message", async ({ message, userId, username, roomId }: { message: string; userId: string; username: string; roomId: string }) => {
       try {
         const response = await axios.post(
           `http://localhost:4000/api/chat/newMessage`,
