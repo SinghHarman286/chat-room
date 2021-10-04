@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import path from "path";
 import * as dotenv from "dotenv";
+
 import authRoute from "./routes/auth";
 import roomRoute from "./routes/room";
 import chatRoute from "./routes/chat";
@@ -9,20 +10,19 @@ import chatRoute from "./routes/chat";
 import { json } from "body-parser";
 import http from "http";
 import socketConnection from "./utils/socket-io";
-
 import { verifyToken } from "./middlewares/auth-middleware";
 
-const cors = require("cors");
+dotenv.config({ path: path.resolve(__dirname, "..") + "/.env" });
+
 const app = express();
+const router = express.Router();
 const server = http.createServer(app);
+const cors = require("cors");
 
 socketConnection(server);
 
 app.use(json());
 app.use(cors());
-const router = express.Router();
-
-dotenv.config({ path: path.resolve(__dirname, "..") + "/.env" });
 
 app.use("/api/auth", authRoute);
 app.use(verifyToken);
