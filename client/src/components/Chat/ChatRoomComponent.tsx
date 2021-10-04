@@ -34,20 +34,21 @@ const ChatRoomComponent: React.FC<{ id: string }> = ({ id }) => {
   }, []);
 
   useEffect(() => {
+    // scrolls the html body to the bottom whenever messages start
+    // overflowing
     if (chatContainerRef && chatContainerRef.current) {
       const element = chatContainerRef.current;
       element.scroll({
         top: element.scrollHeight,
         left: 0,
-        // behavior: "smooth",
       });
     }
   }, [chatContainerRef, messages]);
 
   const fetchMessages = () => {
     socket.emit("get-message", { token, roomId: id });
-    socket.on("recieve-message", (result) => {
-      setMessages(result.conversations);
+    socket.on("recieve-message", ({ data, roomId }) => {
+      roomId === id && setMessages(data.conversations);
       setIsLoading(false);
     });
   };
