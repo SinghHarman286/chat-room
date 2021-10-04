@@ -1,4 +1,4 @@
-import HomeComponent from "../components/Chat/HomeComponent";
+import HomeComponent from "../components/Room/HomeComponent";
 const HomePage = () => {
   return <HomeComponent />;
 };

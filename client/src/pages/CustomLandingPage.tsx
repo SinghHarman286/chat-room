@@ -1,12 +1,12 @@
 import { Result, Button } from "antd";
 import { useHistory } from "react-router-dom";
-import { SmileOutlined } from "@ant-design/icons";
+import { SendOutlined } from "@ant-design/icons";
 
 const CustomLandingPage = () => {
   const history = useHistory();
   return (
     <Result
-      icon={<SmileOutlined />}
+      icon={<SendOutlined />}
       title="Welcome to ChatRoom"
       subTitle="Please Log In or Sign Up to continue using ChatRoom"
       extra={

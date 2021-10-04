@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useRef, useState, useEffect, Fragment } from "react";
 import { useHistory } from "react-router-dom";
-import { message, Alert, Divider, Empty, Input, Button, PageHeader, Card, Row, Col, Modal } from "antd";
+import { Skeleton, message, Alert, Divider, Empty, Input, Button, PageHeader, Card, Row, Col, Modal } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { io } from "socket.io-client";
 
@@ -56,9 +56,11 @@ const HomeComponent = () => {
     setRooms((prevState) => {
       return result.rooms;
     });
+    setIsLoading(false);
   });
 
   useEffect(() => {
+    setIsLoading(true);
     if (userId && token) {
       socket.emit("get-room", { token, userId, body: { added: false, by: "" } });
       return () => {
@@ -124,9 +126,10 @@ const HomeComponent = () => {
   return (
     <>
       <PageHeader className="site-page-header" title="Welcome" subTitle="You can create or join chat rooms" />
-      {rooms.length === 0 && <Empty description="You are not joined to any rooms yet" />}
+      {isLoading && <Skeleton active />}
+      {!isLoading && rooms.length === 0 && <Empty description="You are not joined to any rooms yet" />}
       <Row gutter={24}>
-        {rooms.length === 0 && <Divider />}
+        {!isLoading && rooms.length === 0 && <Divider />}
         {rooms.length !== 0 &&
           rooms.map((room, roomIdx) => {
             return (
@@ -142,13 +145,15 @@ const HomeComponent = () => {
               </Fragment>
             );
           })}
-        <Col className="gutter-row" span={6}>
-          <Card key="0" style={{ textAlign: "center" }} title="Create new room" bordered={true} onClick={() => setNewRoomModal(true)}>
-            <Button>
-              <PlusOutlined style={{ fontSize: "10" }} />
-            </Button>
-          </Card>
-        </Col>
+        {!isLoading && (
+          <Col className="gutter-row" span={6}>
+            <Card key="0" style={{ textAlign: "center" }} title="Create new room" bordered={true} onClick={() => setNewRoomModal(true)}>
+              <Button>
+                <PlusOutlined style={{ fontSize: "10" }} />
+              </Button>
+            </Card>
+          </Col>
+        )}
       </Row>
       {newRoomModal && showCreateRoomModal()}
     </>

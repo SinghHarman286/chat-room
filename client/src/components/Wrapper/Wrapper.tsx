@@ -22,11 +22,6 @@ const Wrapper: React.FC = ({ children }) => {
             </Menu.Item>
           )}
           {isLoggedIn && (
-            <Menu.Item key={3}>
-              <Link to="/profile">Profile</Link>
-            </Menu.Item>
-          )}
-          {isLoggedIn && (
             <Menu.Item key={4}>
               <Button onClick={authContext.logout}>Log Out</Button>
             </Menu.Item>

@@ -37,7 +37,7 @@ app.all("*", () => {
 const start = async () => {
   console.log("Starting DB Server");
   try {
-    await mongoose.connect(process.env.MONGODB_URL!, {
+    await mongoose.connect(process.env.MONGODB_URI!, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
       useCreateIndex: true,
@@ -49,7 +49,7 @@ const start = async () => {
 };
 
 server.listen(process.env.PORT || 4000, () => {
-  console.log("Listening on port 4000!!");
+  console.log(`Listening on port ${process.env.PORT || 4000}`);
 
   start();
 });

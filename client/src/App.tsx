@@ -9,8 +9,6 @@ import HomePage from "./pages/HomePage";
 import AuthPage from "./pages/AuthPage";
 import ChatRoomPage from "./pages/ChatRoomPage";
 
-import UserProfile from "./pages/UserProfile";
-
 import AuthContext from "./store/auth-context";
 
 function App() {
@@ -29,10 +27,6 @@ function App() {
               <AuthPage />
             </Route>
           )}
-          <Route exact path="/profile">
-            {isLoggedIn && <UserProfile />}
-            {!isLoggedIn && <Redirect to="/auth" />}
-          </Route>
           {isLoggedIn && (
             <Route exact path="/rooms/:id">
               <ChatRoomPage />

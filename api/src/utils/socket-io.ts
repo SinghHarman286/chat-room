@@ -2,6 +2,8 @@ import axios from "axios";
 import http, { createServer } from "http";
 import { Server, Socket } from "socket.io";
 
+const PORT = process.env.PORT || 4000;
+
 const socketConnection = (server: http.Server) => {
   let io = new Server(server, {
     cors: {
@@ -18,7 +20,7 @@ const socketConnection = (server: http.Server) => {
     });
     socket.once("get-room", async ({ token, userId, body }) => {
       try {
-        const response = await axios.get(`http://localhost:4000/api/room/getRoom/${userId}`, {
+        const response = await axios.get(`http://localhost:${PORT}/api/room/getRoom/${userId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -32,7 +34,7 @@ const socketConnection = (server: http.Server) => {
     socket.once("add-member-room", async ({ token, userId, roomId, by }) => {
       try {
         const response = await axios.post(
-          "http://localhost:4000/api/room/addMember",
+          `http://localhost:${PORT}/api/room/addMember`,
           {
             userId,
             roomId,
@@ -44,7 +46,7 @@ const socketConnection = (server: http.Server) => {
             },
           }
         );
-        const newRoomsRes = await axios.get(`http://localhost:4000/api/room/getRoom/${userId}`, {
+        const newRoomsRes = await axios.get(`http://localhost:${PORT}/api/room/getRoom/${userId}`, {
           headers: {
             authorization: `Bearer ${token}`,
           },
@@ -56,7 +58,7 @@ const socketConnection = (server: http.Server) => {
     socket.once("remove-member-room", async ({ token, userId, roomId, by }) => {
       try {
         const response = await axios.post(
-          "http://localhost:4000/api/room/deleteMember",
+          `http://localhost:${PORT}/api/room/deleteMember`,
           {
             userId,
             roomId,
@@ -70,7 +72,7 @@ const socketConnection = (server: http.Server) => {
           }
         );
 
-        const newRoomsRes = await axios.get(`http://localhost:4000/api/room/getRoom/${userId}`, {
+        const newRoomsRes = await axios.get(`http://localhost:${PORT}/api/room/getRoom/${userId}`, {
           headers: {
             authorization: `Bearer ${token}`,
           },
@@ -81,7 +83,7 @@ const socketConnection = (server: http.Server) => {
 
     socket.once("get-message", async ({ token, roomId }) => {
       try {
-        const response = await axios.get(`http://localhost:4000/api/chat/getChat/${roomId}`, {
+        const response = await axios.get(`http://localhost:${PORT}/api/chat/getChat/${roomId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -93,7 +95,7 @@ const socketConnection = (server: http.Server) => {
     socket.once("post-message", async ({ token, message, userId, username, roomId }: { token: string; message: string; userId: string; username: string; roomId: string }) => {
       try {
         const response = await axios.post(
-          `http://localhost:4000/api/chat/newMessage`,
+          `http://localhost:${PORT}/api/chat/newMessage`,
           {
             message,
             userId,
