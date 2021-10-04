@@ -19,3 +19,10 @@ ChatRoom is an application where users can connect with one another through priv
 - at the root of the project directory, run `cd api/ && npm install && npm start && cd ..`
 - `cd. client/ && npm install && npm start`
 - Visit localhost:3000
+
+
+## Enhancements
+
+- Deploy on Heroku
+- Add refresh tokens
+- Add Search through rooms and users
