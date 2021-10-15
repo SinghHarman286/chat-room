@@ -68,8 +68,8 @@ ChatRoom is an application where users can connect with one another through priv
 - `npm install -g typescript`
 - `npm install ts-node`
 - `git clone https://github.com/SinghHarman286/chat-room.git`
-- at the root of the project directory, run `cd api/ && npm install && npm start && cd ..`
-- `cd. client/ && npm install && npm start`
+- In the root of the project directory, run `cd api/ && npm install && npm start && cd ..`
+- `cd client/ && npm install && npm start`
 - Visit localhost:3000
 
 
