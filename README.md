@@ -42,12 +42,12 @@ ChatRoom is an application where users can connect with one another through priv
 
 ![Screenshot 2021-10-15 at 2 20 40 AM](https://user-images.githubusercontent.com/67038446/137455943-34644fe9-3b20-4f02-9e16-2a0530d4aa0e.png)
 
-# Joining Rooms and Adding Users
+# Joining Rooms and Adding Users (with admin privilege)
 ![room](https://user-images.githubusercontent.com/67038446/137459213-1fb122d5-c379-47c1-a912-de96c8e67a8b.gif)
 
 ![Screenshot 2021-10-15 at 2 44 32 AM](https://user-images.githubusercontent.com/67038446/137459291-9771c207-a54c-4a48-87ec-ca24e98582e0.png)
 
-# Removing Users
+# Removing Users (with admin privilege)
 ![room](https://user-images.githubusercontent.com/67038446/137459695-876d4fdf-12c3-4b35-8d07-95fa614004fc.gif)
 
 
