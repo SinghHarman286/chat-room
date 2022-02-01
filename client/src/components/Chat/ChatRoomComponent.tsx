@@ -2,10 +2,10 @@ import axios from "axios";
 import { useState, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
 import { Skeleton, Select, Dropdown, Menu, Input, Button, Modal, Empty } from "antd";
-import { SendOutlined, LoadingOutlined } from "@ant-design/icons";
+import { SendOutlined, VideoCameraTwoTone } from "@ant-design/icons";
 import useModal from "../../hooks/use-modal";
+import VideoComponent from "../Video/VideoComponent";
 import "./ChatRoomComponent.css";
-const { Search } = Input;
 
 const ChatRoomComponent: React.FC<{ id: string }> = ({ id }) => {
   const [userId, setUserId] = useState("");
@@ -17,6 +17,7 @@ const ChatRoomComponent: React.FC<{ id: string }> = ({ id }) => {
   const [inputMessage, setInputMessage] = useState("");
   const [users, setUsers] = useState<{ id: string; email: string }[]>([]);
   const [currentUserSelected, setCurrentUserSelected] = useState<string | null>(null);
+  const [enableVideo, setEnableVideo] = useState(false);
   const [modalVisible, setModalVisibility] = useModal(["add", "delete"], false);
   const chatContainerRef = useRef<HTMLInputElement | null>(null);
   const socket = io("http://localhost:4000");
@@ -68,6 +69,7 @@ const ChatRoomComponent: React.FC<{ id: string }> = ({ id }) => {
       getAdmin();
     }
   }, [userId, token]);
+
   setTimeout(() => {
     setUserId(localStorage.getItem("userId")!);
     setUsername(localStorage.getItem("username")!);
@@ -187,6 +189,14 @@ const ChatRoomComponent: React.FC<{ id: string }> = ({ id }) => {
     setInputMessage("");
   };
 
+  const handleVideoCallBtn = () => {
+    setEnableVideo(true);
+  };
+
+  const handleDisconnectUserVideo = () => {
+    setEnableVideo(false);
+  };
+
   const handleMenuClick = async (e: { key: string }) => {
     const { key }: { key: string } = e;
 
@@ -210,7 +220,10 @@ const ChatRoomComponent: React.FC<{ id: string }> = ({ id }) => {
 
   return (
     <div>
-      <h1>Messages {userId && admin === userId && <Dropdown.Button overlay={menu} placement="bottomCenter"></Dropdown.Button>}</h1>
+      <h1>
+        Messages {userId && admin === userId && <Dropdown.Button overlay={menu} placement="bottomCenter"></Dropdown.Button>}{" "}
+        <VideoCameraTwoTone style={{ float: "right", fontSize: "25px" }} onClick={handleVideoCallBtn} />
+      </h1>
       {isLoading && <Skeleton active />}
       <div ref={chatContainerRef} style={{ minHeight: 600, maxHeight: 600, overflowY: "scroll" }}>
         <div style={{ margin: 50 }}>
@@ -238,6 +251,7 @@ const ChatRoomComponent: React.FC<{ id: string }> = ({ id }) => {
       </footer>
       {modalVisible["add"] && showAddModal()}
       {modalVisible["delete"] && showDeleteModal()}
+      {enableVideo && <VideoComponent username={username} roomId={id} handleDisconnectUserVideo={handleDisconnectUserVideo} />}
     </div>
   );
 };

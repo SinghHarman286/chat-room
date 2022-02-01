@@ -12,6 +12,8 @@ const socketConnection = (server: http.Server) => {
   });
 
   const currentUser: { [userId: string]: string } = {};
+  const usersInVideo: any = {};
+  const socketToRoom: any = {};
 
   // triggerd whenever a new client connects with the socket
   io.on("connection", (socket: Socket) => {
@@ -21,6 +23,39 @@ const socketConnection = (server: http.Server) => {
       currentUser[userId] = socketId;
       socket.join(socketId);
     });
+
+    socket.on("join-video-room", (roomId: string) => {
+      if (usersInVideo[roomId]) {
+        usersInVideo[roomId].push(socket.id);
+      } else {
+        usersInVideo[roomId] = [socket.id];
+      }
+      socketToRoom[socket.id] = roomId;
+      const usersInThisRoom = usersInVideo[roomId].filter((id: string) => id !== socket.id);
+      socket.emit("users-in-room", usersInThisRoom);
+    });
+
+    socket.on("send-signal", (payload) => {
+      io.to(payload.userToSignal).emit("user-joined", { signal: payload.signal, callerID: payload.callerID });
+    });
+
+    socket.on("return-signal", (payload) => {
+      io.to(payload.callerID).emit("receive-returned-signal", { signal: payload.signal, id: socket.id });
+    });
+
+    socket.on("disconnect-video", () => {
+      const roomId = socketToRoom[socket.id];
+      let room = usersInVideo[roomId];
+      delete socketToRoom[socket.id];
+      if (room) {
+        room = room.filter((id: any) => id !== socket.id);
+        usersInVideo[roomId] = room;
+        for (const user of room) {
+          io.to(user).emit("user-left", { id: socket.id });
+        }
+      }
+    });
+
     socket.once("get-room", async ({ token, userId, body }) => {
       // listens to get-room event and forward request with userId and token to the route
       try {

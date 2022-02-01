@@ -1,14 +1,21 @@
 .message {
   border-radius: 20px;
-  background-color: grey;
+  background-color: #e4e6eb;
   padding: 8px 15px;
   margin-top: 5px;
   width: auto;
   max-width: 50%;
   margin-bottom: 5px;
   display: inline-block;
-  color: white;
+  color: black;
+  word-wrap: break-word;
 }
 .message.own {
   background-color: #1890ff;
+  color: white;
+}
+
+.anticon .anticon-video-camera .videoCamera {
+  font-size: 6em;
+  transition: 5s ease-out;
 }

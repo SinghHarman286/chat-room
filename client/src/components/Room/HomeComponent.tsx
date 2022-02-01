@@ -6,7 +6,6 @@ import { PlusOutlined } from "@ant-design/icons";
 import { io } from "socket.io-client";
 
 const HomeComponent = () => {
-  const [username, setUsername] = useState("");
   const [userId, setUserId] = useState("");
   const [token, setToken] = useState("");
   const [newRoomModal, setNewRoomModal] = useState(false);
@@ -20,7 +19,6 @@ const HomeComponent = () => {
 
   useEffect(() => {
     return () => {
-      setUsername("");
       setUserId("");
       setNewRoomModal(false);
       setNewRoomName("");
@@ -70,7 +68,6 @@ const HomeComponent = () => {
   }, [userId, token]);
 
   setTimeout(() => {
-    setUsername(localStorage.getItem("username")!);
     setUserId(localStorage.getItem("userId")!);
     setToken(localStorage.getItem("tokenId")!);
   }, 1000);
