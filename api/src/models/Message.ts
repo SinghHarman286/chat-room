@@ -1,5 +1,11 @@
-import mongoose from "mongoose";
+import mongoose, { Document, Schema } from "mongoose";
+import { User } from "./Users";
 
+export interface Message extends Document {
+  userId: Schema.Types.ObjectId | string;
+  username: string;
+  message: string;
+}
 const MessageSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   username: {
@@ -12,6 +18,6 @@ const MessageSchema = new mongoose.Schema({
   },
 });
 
-const Message = mongoose.model("Message", MessageSchema);
+const MgMessage = mongoose.model<Message>("Message", MessageSchema);
 
-export { Message };
+export default MgMessage;

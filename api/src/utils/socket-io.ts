@@ -1,5 +1,5 @@
 import axios from "axios";
-import http, { createServer } from "http";
+import http from "http";
 import { Server, Socket } from "socket.io";
 
 const PORT = process.env.PORT || 4000;
@@ -12,12 +12,12 @@ const socketConnection = (server: http.Server) => {
   });
 
   const currentUser: { [userId: string]: string } = {};
-  const usersInVideo: any = {};
-  const socketToRoom: any = {};
+  const usersInVideo: Record<string, string[]> = {};
+  const socketToRoom: Record<string, string> = {};
 
   // triggerd whenever a new client connects with the socket
   io.on("connection", (socket: Socket) => {
-    socket.on("join", ({ userId, socketId }) => {
+    socket.on("join", ({ userId, socketId }: { userId: string; socketId: string }) => {
       // listen to join event and store the userId and respective socketId
       // in the hasmap currentUser and joins that socketId
       currentUser[userId] = socketId;
@@ -144,31 +144,46 @@ const socketConnection = (server: http.Server) => {
       } catch (err) {}
     });
 
-    socket.once("post-message", async ({ token, message, userId, username, roomId }: { token: string; message: string; userId: string; username: string; roomId: string }) => {
-      // listens to the event 'post-message' and forward the request to a route with message, userId, username
-      // and roomId
-      try {
-        const response = await axios.post(
-          `http://localhost:${PORT}/api/chat/newMessage`,
-          {
-            message,
-            userId,
-            username,
-            roomId,
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
+    socket.once(
+      "post-message",
+      async ({
+        token,
+        message,
+        userId,
+        username,
+        roomId,
+      }: {
+        token: string;
+        message: string;
+        userId: string;
+        username: string;
+        roomId: string;
+      }) => {
+        // listens to the event 'post-message' and forward the request to a route with message, userId, username
+        // and roomId
+        try {
+          const response = await axios.post(
+            `http://localhost:${PORT}/api/chat/newMessage`,
+            {
+              message,
+              userId,
+              username,
+              roomId,
             },
-          }
-        );
-        // emits 'recieve-message' with the response data
-        io.emit("recieve-message", { data: response.data, roomId });
-      } catch (err) {
-        console.log(err);
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          // emits 'recieve-message' with the response data
+          io.emit("recieve-message", { data: response.data, roomId });
+        } catch (err) {
+          console.log(err);
+        }
       }
-    });
+    );
   });
 };
 
