@@ -1,22 +1,17 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { AuthContextType, UserProfileType } from "../types/AuthContextTypes";
 
 let logOutTimer: NodeJS.Timeout;
 
-interface AuthContextInterface {
-  token: string | null;
-  isLoggedIn: boolean;
-  login: (token: string, expTime: string) => void;
-  logout: () => void;
-}
-
-const AuthContext = React.createContext<AuthContextInterface>({
+const AuthContext = React.createContext<AuthContextType>({
   token: null,
+  user: null,
   isLoggedIn: false,
-  login: (token: string, expTime: string) => {},
+  login: (user: { token: string | null } & UserProfileType, expTime: string) => {},
   logout: () => {},
 });
 
-const calcRemainingTime = (expTime: string) => {
+const calcRemainingTime = (expTime: string): number => {
   const currTime = new Date().getTime();
   const adjExpTime = new Date(expTime).getTime();
 
@@ -34,7 +29,7 @@ const retrieveStoreToken = () => {
   if (remainingTime <= 60000) {
     localStorage.removeItem("tokenId");
     localStorage.removeItem("expTime");
-    localStorage.removeItem("username");
+    // localStorage.removeItem("username");
     return null;
   }
 
@@ -44,22 +39,37 @@ const retrieveStoreToken = () => {
   };
 };
 
+const retrieveStoreUser = () => {
+  const user: UserProfileType | null = JSON.parse(localStorage.getItem("user") || "null");
+  return user;
+};
+
 const AuthContextProvider: React.FC = ({ children }) => {
+  console.log("in provider ");
   const tokenData = retrieveStoreToken();
-  let initialToken = null;
+  let initialToken: string | null = null;
   if (tokenData) {
     initialToken = tokenData.token;
   }
 
   const [token, setToken] = useState(initialToken);
+  const userData = retrieveStoreUser();
+
+  const [user, setUser] = useState<UserProfileType | null>(userData);
 
   const isUserLoggedIn = !!token;
 
-  const handleLogin = (token: string | null, expTime: string) => {
-    setToken(token);
-    localStorage.setItem("tokenId", token as string);
-    localStorage.setItem("expTime", expTime);
+  const handleLogin = (user: { token: string | null } & UserProfileType, expTime: string) => {
+    console.log("in handle login");
+    setToken(user.token);
+    const { userId, username } = user;
+    setUser({ userId, username });
+    console.log("user set ", user);
 
+    localStorage.setItem("tokenId", user.token as string);
+    localStorage.setItem("expTime", expTime);
+    localStorage.setItem("user", JSON.stringify({ userId, username }));
+    console.log("user set in local host", user);
     const remainingTime = calcRemainingTime(expTime);
 
     logOutTimer = setTimeout(handleLogout, remainingTime);
@@ -67,9 +77,10 @@ const AuthContextProvider: React.FC = ({ children }) => {
 
   const handleLogout = useCallback(() => {
     setToken("");
+    setUser(null);
     localStorage.removeItem("tokenId");
     localStorage.removeItem("expTime");
-    localStorage.removeItem("username");
+    localStorage.removeItem("user");
 
     if (logOutTimer) {
       clearTimeout(logOutTimer);
@@ -78,6 +89,7 @@ const AuthContextProvider: React.FC = ({ children }) => {
 
   const contextValue = {
     token: token,
+    user: user,
     isLoggedIn: isUserLoggedIn,
     login: handleLogin,
     logout: handleLogout,

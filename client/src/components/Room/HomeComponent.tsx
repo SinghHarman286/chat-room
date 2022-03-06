@@ -1,13 +1,14 @@
 import axios from "axios";
-import { useRef, useState, useEffect, Fragment } from "react";
+import { useState, useEffect, useContext, Fragment } from "react";
 import { useHistory } from "react-router-dom";
 import { Skeleton, message, Alert, Divider, Empty, Input, Button, PageHeader, Card, Row, Col, Modal } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
+import AuthContext from "../../store/auth-context";
 import { io } from "socket.io-client";
 
 const HomeComponent = () => {
-  const [userId, setUserId] = useState("");
-  const [token, setToken] = useState("");
+  // const [userId, setUserId] = useState("");
+  // const [token, setToken] = useState("");
   const [newRoomModal, setNewRoomModal] = useState(false);
   const [newRoomName, setNewRoomName] = useState("");
   const [rooms, setRooms] = useState<{ id: number; name: string }[]>([]);
@@ -16,10 +17,14 @@ const HomeComponent = () => {
   const history = useHistory();
 
   const socket = io("http://localhost:4000");
+  const authCtx = useContext(AuthContext);
+  console.log(authCtx);
+  const userId = authCtx.user?.userId;
+  const token = authCtx.token;
 
   useEffect(() => {
     return () => {
-      setUserId("");
+      // setUserId("");
       setNewRoomModal(false);
       setNewRoomName("");
       setRooms([]);
@@ -51,14 +56,14 @@ const HomeComponent = () => {
         }
       }
     }
-    setRooms((prevState) => {
-      return result.rooms;
-    });
+    setRooms(result.rooms);
     setIsLoading(false);
   });
 
   useEffect(() => {
+    console.log("in use effect");
     setIsLoading(true);
+    console.log(userId, token);
     if (userId && token) {
       socket.emit("get-room", { token, userId, body: { added: false, by: "" } });
       return () => {
@@ -68,8 +73,8 @@ const HomeComponent = () => {
   }, [userId, token]);
 
   setTimeout(() => {
-    setUserId(localStorage.getItem("userId")!);
-    setToken(localStorage.getItem("tokenId")!);
+    // setUserId(localStorage.getItem("userId")!);
+    // setToken(localStorage.getItem("tokenId")!);
   }, 1000);
 
   const handleInputChange = (e: React.FormEvent<HTMLInputElement>) => {
@@ -83,7 +88,7 @@ const HomeComponent = () => {
       return false;
     }
     try {
-      const response = await axios.post(
+      await axios.post(
         "http://localhost:4000/api/room/newRoom",
         {
           name: newRoomName,
@@ -109,8 +114,17 @@ const HomeComponent = () => {
 
   const showCreateRoomModal = () => {
     return (
-      <Modal title="Create New Room" visible={true} onOk={() => handleCreateRoom()} onCancel={() => setNewRoomModal(false)}>
-        <Input placeholder="Enter name of the room you want to create" value={newRoomName} onChange={handleInputChange} />
+      <Modal
+        title="Create New Room"
+        visible={true}
+        onOk={() => handleCreateRoom()}
+        onCancel={() => setNewRoomModal(false)}
+      >
+        <Input
+          placeholder="Enter name of the room you want to create"
+          value={newRoomName}
+          onChange={handleInputChange}
+        />
         <br />
         {error.isError && <Alert message={error.message} type="error" showIcon closable />}
       </Modal>
@@ -120,6 +134,7 @@ const HomeComponent = () => {
   const handleJoinRoom = (id: number) => {
     history.push(`/rooms/${id}`);
   };
+
   return (
     <>
       <PageHeader className="site-page-header" title="Welcome" subTitle="You can create or join chat rooms" />
@@ -144,7 +159,13 @@ const HomeComponent = () => {
           })}
         {!isLoading && (
           <Col className="gutter-row" span={6}>
-            <Card key="0" style={{ textAlign: "center" }} title="Create new room" bordered={true} onClick={() => setNewRoomModal(true)}>
+            <Card
+              key="0"
+              style={{ textAlign: "center" }}
+              title="Create new room"
+              bordered={true}
+              onClick={() => setNewRoomModal(true)}
+            >
               <Button>
                 <PlusOutlined style={{ fontSize: "10" }} />
               </Button>

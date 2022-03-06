@@ -1,18 +1,20 @@
 import axios from "axios";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import { io } from "socket.io-client";
 import { Skeleton, Select, Dropdown, Menu, Input, Button, Modal, Empty } from "antd";
 import { SendOutlined, VideoCameraTwoTone } from "@ant-design/icons";
 import useModal from "../../hooks/use-modal";
 import VideoComponent from "../Video/VideoComponent";
+import AuthContext from "../../store/auth-context";
 import "./ChatRoomComponent.css";
 
 const ChatRoomComponent: React.FC<{ id: string }> = ({ id }) => {
-  const [userId, setUserId] = useState("");
+  const authCtx = useContext(AuthContext);
+  // const [userId, setUserId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [admin, setAdmin] = useState("");
-  const [username, setUsername] = useState("");
-  const [token, setToken] = useState("");
+  // const [username, setUsername] = useState("");
+  // const [token, setToken] = useState("");
   const [messages, setMessages] = useState<{ username: string; userId: string; message: string; _v: string }[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [users, setUsers] = useState<{ id: string; email: string }[]>([]);
@@ -21,12 +23,15 @@ const ChatRoomComponent: React.FC<{ id: string }> = ({ id }) => {
   const [modalVisible, setModalVisibility] = useModal(["add", "delete"], false);
   const chatContainerRef = useRef<HTMLInputElement | null>(null);
   const socket = io("http://localhost:4000");
+  const username = authCtx.user!.username;
+  const userId = authCtx.user!.userId;
+  const token = authCtx.token;
 
   useEffect(() => {
     socket.on("connect", () => {});
     return () => {
-      setUserId("");
-      setUsername("");
+      // setUserId("");
+      // setUsername("");
       setMessages([]);
       setInputMessage("");
       setCurrentUserSelected(null);
@@ -70,11 +75,11 @@ const ChatRoomComponent: React.FC<{ id: string }> = ({ id }) => {
     }
   }, [userId, token]);
 
-  setTimeout(() => {
-    setUserId(localStorage.getItem("userId")!);
-    setUsername(localStorage.getItem("username")!);
-    setToken(localStorage.getItem("tokenId")!);
-  }, 1000);
+  // setTimeout(() => {
+  //   // setUserId(localStorage.getItem("userId")!);
+  //   // setUsername(localStorage.getItem("username")!);
+  //   // setToken(localStorage.getItem("tokenId")!);
+  // }, 1000);
 
   useEffect(() => {
     if (users.length > 0) {
@@ -221,7 +226,8 @@ const ChatRoomComponent: React.FC<{ id: string }> = ({ id }) => {
   return (
     <div>
       <h1>
-        Messages {userId && admin === userId && <Dropdown.Button overlay={menu} placement="bottomCenter"></Dropdown.Button>}{" "}
+        Messages{" "}
+        {userId && admin === userId && <Dropdown.Button overlay={menu} placement="bottomCenter"></Dropdown.Button>}{" "}
         <VideoCameraTwoTone style={{ float: "right", fontSize: "25px" }} onClick={handleVideoCallBtn} />
       </h1>
       {isLoading && <Skeleton active />}
@@ -246,12 +252,22 @@ const ChatRoomComponent: React.FC<{ id: string }> = ({ id }) => {
           value={inputMessage}
           onChange={handleInputMessage}
           onPressEnter={handleNewMessageInput}
-          addonAfter={<Button disabled={inputMessage.trim() === ""} size="small" style={{ backgroundColor: "#FAFAFA", border: "none" }} icon={<SendOutlined />} onClick={handleNewMessageInput} />}
+          addonAfter={
+            <Button
+              disabled={inputMessage.trim() === ""}
+              size="small"
+              style={{ backgroundColor: "#FAFAFA", border: "none" }}
+              icon={<SendOutlined />}
+              onClick={handleNewMessageInput}
+            />
+          }
         />
       </footer>
       {modalVisible["add"] && showAddModal()}
       {modalVisible["delete"] && showDeleteModal()}
-      {enableVideo && <VideoComponent username={username} roomId={id} handleDisconnectUserVideo={handleDisconnectUserVideo} />}
+      {enableVideo && (
+        <VideoComponent username={username} roomId={id} handleDisconnectUserVideo={handleDisconnectUserVideo} />
+      )}
     </div>
   );
 };
