@@ -7,8 +7,6 @@ import AuthContext from "../../store/auth-context";
 import { io } from "socket.io-client";
 
 const HomeComponent = () => {
-  // const [userId, setUserId] = useState("");
-  // const [token, setToken] = useState("");
   const [newRoomModal, setNewRoomModal] = useState(false);
   const [newRoomName, setNewRoomName] = useState("");
   const [rooms, setRooms] = useState<{ id: number; name: string }[]>([]);
@@ -18,13 +16,11 @@ const HomeComponent = () => {
 
   const socket = io("http://localhost:4000");
   const authCtx = useContext(AuthContext);
-  console.log(authCtx);
   const userId = authCtx.user?.userId;
   const token = authCtx.token;
 
   useEffect(() => {
     return () => {
-      // setUserId("");
       setNewRoomModal(false);
       setNewRoomName("");
       setRooms([]);
@@ -61,9 +57,7 @@ const HomeComponent = () => {
   });
 
   useEffect(() => {
-    console.log("in use effect");
     setIsLoading(true);
-    console.log(userId, token);
     if (userId && token) {
       socket.emit("get-room", { token, userId, body: { added: false, by: "" } });
       return () => {
@@ -71,11 +65,6 @@ const HomeComponent = () => {
       };
     }
   }, [userId, token]);
-
-  setTimeout(() => {
-    // setUserId(localStorage.getItem("userId")!);
-    // setToken(localStorage.getItem("tokenId")!);
-  }, 1000);
 
   const handleInputChange = (e: React.FormEvent<HTMLInputElement>) => {
     setError({ isError: false, message: "" });

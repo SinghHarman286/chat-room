@@ -46,3 +46,5 @@ export type RoomDTO = {
 export type getAdminDTO = Pick<RoomDTO, "admin"> & { statusCode: number };
 
 export type GetRoomDTO = { rooms: Pick<RoomDTO, "id" | "name">[]; statusCode: number };
+
+export type IsValidRoomDTO = { isValid: boolean; statusCode: number };

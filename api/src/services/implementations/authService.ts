@@ -62,7 +62,14 @@ class AuthService implements IAuthService {
 
       const token = this.getToken(email);
       const userId = existingUser.id;
-      return { statusCode: 200, message: "LOGGED_IN", token, expiresIn: this.EXPIRESIN, username: existingUser.username, userId };
+      return {
+        statusCode: 200,
+        message: "LOGGED_IN",
+        token,
+        expiresIn: this.EXPIRESIN,
+        username: existingUser.username,
+        userId,
+      };
     } catch (err) {
       throw err;
     }

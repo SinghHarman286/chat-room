@@ -1,4 +1,4 @@
-import { getAdminDTO, GetRoomDTO, SuccessMessageDTO, ErrorMessageDTO } from "../../types";
+import { getAdminDTO, GetRoomDTO, IsValidRoomDTO, SuccessMessageDTO, ErrorMessageDTO } from "../../types";
 
 export default interface IRoomService {
   /**
@@ -43,4 +43,13 @@ export default interface IRoomService {
    * @throws Error if room retrieval fails
    */
   getRoom(userId: string): Promise<GetRoomDTO>;
+
+  /**
+   * checks if a room is valid and if the user is authorized to access the room
+   * @param roomId room's id
+   * @param userId user's id
+   * @returns isValidRoomDTO
+   * @throws Error if room retrieval fails
+   */
+  isValidRoom(roomId: string, userId: string): Promise<IsValidRoomDTO>;
 }

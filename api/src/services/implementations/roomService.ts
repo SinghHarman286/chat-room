@@ -1,4 +1,5 @@
-import { getAdminDTO, GetRoomDTO, SuccessMessageDTO, ErrorMessageDTO } from "../../types";
+import mongoose from "mongoose";
+import { getAdminDTO, GetRoomDTO, IsValidRoomDTO, SuccessMessageDTO, ErrorMessageDTO } from "../../types";
 import IRoomService from "../interfaces/roomService";
 import MgRoom, { Room } from "../../models/Room";
 import { User } from "../../models/Users";
@@ -72,6 +73,23 @@ class RoomService implements IRoomService {
       const rooms: Room[] = await MgRoom.find({ members: { $in: [userId] } });
       const chatRooms = rooms.map((room) => ({ id: room.id, name: room.name }));
       return { statusCode: 200, rooms: chatRooms };
+    } catch (err: unknown) {
+      throw err;
+    }
+  }
+
+  async isValidRoom(roomId: string, userId: string): Promise<IsValidRoomDTO> {
+    try {
+      if (!mongoose.isValidObjectId(roomId)) {
+        return { statusCode: 200, isValid: false };
+      }
+      const room: Room | null = await MgRoom.findById(roomId).populate("members");
+      if (!room) {
+        return { statusCode: 200, isValid: false };
+      }
+      const members = room.members as User[];
+      const roomMemberIdArr = members.map((member) => member.id);
+      return { statusCode: 200, isValid: roomMemberIdArr.includes(userId) };
     } catch (err: unknown) {
       throw err;
     }

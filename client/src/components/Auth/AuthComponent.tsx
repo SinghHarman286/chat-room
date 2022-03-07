@@ -42,9 +42,6 @@ const AuthComponent = () => {
         { userId: response.data.userId, username: response.data.username, token: response.data.token },
         expTime.toISOString()
       );
-      // localStorage.setItem("user", JSON.stringify({ username: response.data.username, userId: response.data.userId }));
-      // localStorage.setItem("username", response.data.username);
-      // localStorage.setItem("userId", response.data.userId);
       history.push("/");
     } catch (err: any) {
       console.log(err);

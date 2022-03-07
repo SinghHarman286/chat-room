@@ -29,7 +29,7 @@ const retrieveStoreToken = () => {
   if (remainingTime <= 60000) {
     localStorage.removeItem("tokenId");
     localStorage.removeItem("expTime");
-    // localStorage.removeItem("username");
+    localStorage.removeItem("user");
     return null;
   }
 
@@ -45,7 +45,6 @@ const retrieveStoreUser = () => {
 };
 
 const AuthContextProvider: React.FC = ({ children }) => {
-  console.log("in provider ");
   const tokenData = retrieveStoreToken();
   let initialToken: string | null = null;
   if (tokenData) {
@@ -60,16 +59,14 @@ const AuthContextProvider: React.FC = ({ children }) => {
   const isUserLoggedIn = !!token;
 
   const handleLogin = (user: { token: string | null } & UserProfileType, expTime: string) => {
-    console.log("in handle login");
     setToken(user.token);
     const { userId, username } = user;
     setUser({ userId, username });
-    console.log("user set ", user);
 
     localStorage.setItem("tokenId", user.token as string);
     localStorage.setItem("expTime", expTime);
     localStorage.setItem("user", JSON.stringify({ userId, username }));
-    console.log("user set in local host", user);
+
     const remainingTime = calcRemainingTime(expTime);
 
     logOutTimer = setTimeout(handleLogout, remainingTime);

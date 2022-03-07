@@ -65,4 +65,15 @@ roomRouter.get("/getRoom/:userId", async (req: Request, res: Response) => {
   }
 });
 
+roomRouter.get("/:userId/isValidRoom/:roomId", async (req: Request, res: Response) => {
+  // this route checks if a room exist, and if user is authorized to access the room
+  try {
+    const response = await roomService.isValidRoom(req.params.roomId, req.params.userId);
+    const { statusCode, ...responseBody } = response;
+    res.status(statusCode).json(responseBody);
+  } catch (err: unknown) {
+    return res.status(500).json(err);
+  }
+});
+
 export default roomRouter;

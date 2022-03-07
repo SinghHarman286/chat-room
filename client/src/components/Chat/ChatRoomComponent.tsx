@@ -1,7 +1,8 @@
 import axios from "axios";
 import { useState, useEffect, useContext, useRef } from "react";
+import { useHistory } from "react-router-dom";
 import { io } from "socket.io-client";
-import { Skeleton, Select, Dropdown, Menu, Input, Button, Modal, Empty } from "antd";
+import { message, Skeleton, Select, Dropdown, Menu, Input, Button, Modal, Empty } from "antd";
 import { SendOutlined, VideoCameraTwoTone } from "@ant-design/icons";
 import useModal from "../../hooks/use-modal";
 import VideoComponent from "../Video/VideoComponent";
@@ -10,18 +11,19 @@ import "./ChatRoomComponent.css";
 
 const ChatRoomComponent: React.FC<{ id: string }> = ({ id }) => {
   const authCtx = useContext(AuthContext);
-  // const [userId, setUserId] = useState("");
+  const history = useHistory();
+
   const [isLoading, setIsLoading] = useState(false);
   const [admin, setAdmin] = useState("");
-  // const [username, setUsername] = useState("");
-  // const [token, setToken] = useState("");
   const [messages, setMessages] = useState<{ username: string; userId: string; message: string; _v: string }[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [users, setUsers] = useState<{ id: string; email: string }[]>([]);
   const [currentUserSelected, setCurrentUserSelected] = useState<string | null>(null);
   const [enableVideo, setEnableVideo] = useState(false);
+
   const [modalVisible, setModalVisibility] = useModal(["add", "delete"], false);
   const chatContainerRef = useRef<HTMLInputElement | null>(null);
+
   const socket = io("http://localhost:4000");
   const username = authCtx.user!.username;
   const userId = authCtx.user!.userId;
@@ -30,8 +32,6 @@ const ChatRoomComponent: React.FC<{ id: string }> = ({ id }) => {
   useEffect(() => {
     socket.on("connect", () => {});
     return () => {
-      // setUserId("");
-      // setUsername("");
       setMessages([]);
       setInputMessage("");
       setCurrentUserSelected(null);
@@ -61,7 +61,7 @@ const ChatRoomComponent: React.FC<{ id: string }> = ({ id }) => {
 
   useEffect(() => {
     setIsLoading(true);
-    const getAdmin = async () => {
+    const getAdmin = async (): Promise<void> => {
       const response = await axios.get(`http://localhost:4000/api/room/getAdmin/${id}`, {
         headers: {
           authorization: `Bearer ${token}`,
@@ -69,17 +69,23 @@ const ChatRoomComponent: React.FC<{ id: string }> = ({ id }) => {
       });
       setAdmin(response.data.admin);
     };
-    if (userId && token) {
+    const isValidRoom = async (userId: string): Promise<void> => {
+      const response = await axios.get(`http://localhost:4000/api/room/${userId}/isValidRoom/${id}`, {
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.data.isValid) {
+        message.error(`Room does not exist`);
+        history.replace("/");
+      }
       fetchMessages();
       getAdmin();
+    };
+    if (userId && token) {
+      isValidRoom(userId);
     }
   }, [userId, token]);
-
-  // setTimeout(() => {
-  //   // setUserId(localStorage.getItem("userId")!);
-  //   // setUsername(localStorage.getItem("username")!);
-  //   // setToken(localStorage.getItem("tokenId")!);
-  // }, 1000);
 
   useEffect(() => {
     if (users.length > 0) {

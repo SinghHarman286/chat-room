@@ -1,5 +1,4 @@
 import mongoose, { Document, Schema } from "mongoose";
-import { User } from "./Users";
 
 export interface Message extends Document {
   userId: Schema.Types.ObjectId | string;
