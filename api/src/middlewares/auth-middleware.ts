@@ -15,7 +15,7 @@ export const verifyToken = (req: Request, res: Response, next: NextFunction) => 
   try {
     // if token is verified, we proceed by calling next(), otherwise we
     // catch the error and send a 401 status code
-    const decoded = jwt.verify(token, process.env.SECRET_KEY);
+    jwt.verify(token, process.env.SECRET_KEY);
     next();
   } catch (e) {
     res.status(401).json("Token not valid");

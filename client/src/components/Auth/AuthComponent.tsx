@@ -1,7 +1,8 @@
 import { useState, useContext, useEffect } from "react";
 import { useHistory } from "react-router-dom";
-import { Alert, Card, Form, Input, Button, Checkbox } from "antd";
+import { Alert, Card, Form, Input, Button } from "antd";
 import AuthContext from "../../store/auth-context";
+import { AuthPayload } from "../../types/AuthContextTypes";
 import axios from "axios";
 
 const AuthComponent = () => {
@@ -18,7 +19,7 @@ const AuthComponent = () => {
     };
   }, []);
 
-  const onFinish = async (values: { email: string; username?: string; password: string }) => {
+  const onFinish = async (values: AuthPayload) => {
     setError({ isError: false, message: "" });
     setIsLoading(true);
     const { email, username, password } = values;
@@ -26,7 +27,7 @@ const AuthComponent = () => {
 
     url += isLogin ? "login" : "signup";
 
-    let payload: { email: string; password: string; username?: string } = { email, password };
+    let payload: AuthPayload = { email, password };
     if (!isLogin) {
       payload = { ...payload, username };
     }
@@ -37,9 +38,10 @@ const AuthComponent = () => {
         },
       });
       const expTime = new Date(new Date().getTime() + +response.data.expiresIn * 1000);
-      authContext.login(response.data.token, expTime.toISOString());
-      localStorage.setItem("username", response.data.username);
-      localStorage.setItem("userId", response.data.userId);
+      authContext.login(
+        { userId: response.data.userId, username: response.data.username, token: response.data.token },
+        expTime.toISOString()
+      );
       history.push("/");
     } catch (err: any) {
       console.log(err);
@@ -58,7 +60,15 @@ const AuthComponent = () => {
   };
   return (
     <Card title={isLogin ? "Login" : "SignUp"}>
-      <Form name="basic" labelCol={{ span: 8 }} wrapperCol={{ span: 8 }} initialValues={{ remember: true }} onFinish={onFinish} onFinishFailed={onFinishFailed} autoComplete="off">
+      <Form
+        name="basic"
+        labelCol={{ span: 8 }}
+        wrapperCol={{ span: 8 }}
+        initialValues={{ remember: true }}
+        onFinish={onFinish}
+        onFinishFailed={onFinishFailed}
+        autoComplete="off"
+      >
         <Form.Item
           label="Email"
           name="email"
@@ -74,12 +84,20 @@ const AuthComponent = () => {
         </Form.Item>
 
         {!isLogin && (
-          <Form.Item label="Username" name="username" rules={[{ required: true, message: "Please input your username!" }]}>
+          <Form.Item
+            label="Username"
+            name="username"
+            rules={[{ required: true, message: "Please input your username!" }]}
+          >
             <Input />
           </Form.Item>
         )}
 
-        <Form.Item label="Password" name="password" rules={[{ required: true, message: "Please input your password!" }]}>
+        <Form.Item
+          label="Password"
+          name="password"
+          rules={[{ required: true, message: "Please input your password!" }]}
+        >
           <Input.Password />
         </Form.Item>
 

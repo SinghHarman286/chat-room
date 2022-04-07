@@ -1,31 +1,37 @@
 import axios from "axios";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
+import { useHistory } from "react-router-dom";
 import { io } from "socket.io-client";
-import { Skeleton, Select, Dropdown, Menu, Input, Button, Modal, Empty } from "antd";
-import { SendOutlined, LoadingOutlined } from "@ant-design/icons";
+import { message, Skeleton, Select, Dropdown, Menu, Input, Button, Modal, Empty } from "antd";
+import { SendOutlined, VideoCameraTwoTone } from "@ant-design/icons";
 import useModal from "../../hooks/use-modal";
+import VideoComponent from "../Video/VideoComponent";
+import AuthContext from "../../store/auth-context";
 import "./ChatRoomComponent.css";
-const { Search } = Input;
 
 const ChatRoomComponent: React.FC<{ id: string }> = ({ id }) => {
-  const [userId, setUserId] = useState("");
+  const authCtx = useContext(AuthContext);
+  const history = useHistory();
+
   const [isLoading, setIsLoading] = useState(false);
   const [admin, setAdmin] = useState("");
-  const [username, setUsername] = useState("");
-  const [token, setToken] = useState("");
   const [messages, setMessages] = useState<{ username: string; userId: string; message: string; _v: string }[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [users, setUsers] = useState<{ id: string; email: string }[]>([]);
   const [currentUserSelected, setCurrentUserSelected] = useState<string | null>(null);
+  const [enableVideo, setEnableVideo] = useState(false);
+
   const [modalVisible, setModalVisibility] = useModal(["add", "delete"], false);
   const chatContainerRef = useRef<HTMLInputElement | null>(null);
+
   const socket = io("http://localhost:4000");
+  const username = authCtx.user!.username;
+  const userId = authCtx.user!.userId;
+  const token = authCtx.token;
 
   useEffect(() => {
     socket.on("connect", () => {});
     return () => {
-      setUserId("");
-      setUsername("");
       setMessages([]);
       setInputMessage("");
       setCurrentUserSelected(null);
@@ -55,7 +61,7 @@ const ChatRoomComponent: React.FC<{ id: string }> = ({ id }) => {
 
   useEffect(() => {
     setIsLoading(true);
-    const getAdmin = async () => {
+    const getAdmin = async (): Promise<void> => {
       const response = await axios.get(`http://localhost:4000/api/room/getAdmin/${id}`, {
         headers: {
           authorization: `Bearer ${token}`,
@@ -63,16 +69,23 @@ const ChatRoomComponent: React.FC<{ id: string }> = ({ id }) => {
       });
       setAdmin(response.data.admin);
     };
-    if (userId && token) {
+    const isValidRoom = async (userId: string): Promise<void> => {
+      const response = await axios.get(`http://localhost:4000/api/room/${userId}/isValidRoom/${id}`, {
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.data.isValid) {
+        message.error(`Room does not exist`);
+        history.replace("/");
+      }
       fetchMessages();
       getAdmin();
+    };
+    if (userId && token) {
+      isValidRoom(userId);
     }
   }, [userId, token]);
-  setTimeout(() => {
-    setUserId(localStorage.getItem("userId")!);
-    setUsername(localStorage.getItem("username")!);
-    setToken(localStorage.getItem("tokenId")!);
-  }, 1000);
 
   useEffect(() => {
     if (users.length > 0) {
@@ -187,6 +200,14 @@ const ChatRoomComponent: React.FC<{ id: string }> = ({ id }) => {
     setInputMessage("");
   };
 
+  const handleVideoCallBtn = () => {
+    setEnableVideo(true);
+  };
+
+  const handleDisconnectUserVideo = () => {
+    setEnableVideo(false);
+  };
+
   const handleMenuClick = async (e: { key: string }) => {
     const { key }: { key: string } = e;
 
@@ -210,7 +231,11 @@ const ChatRoomComponent: React.FC<{ id: string }> = ({ id }) => {
 
   return (
     <div>
-      <h1>Messages {userId && admin === userId && <Dropdown.Button overlay={menu} placement="bottomCenter"></Dropdown.Button>}</h1>
+      <h1>
+        Messages{" "}
+        {userId && admin === userId && <Dropdown.Button overlay={menu} placement="bottomCenter"></Dropdown.Button>}{" "}
+        <VideoCameraTwoTone style={{ float: "right", fontSize: "25px" }} onClick={handleVideoCallBtn} />
+      </h1>
       {isLoading && <Skeleton active />}
       <div ref={chatContainerRef} style={{ minHeight: 600, maxHeight: 600, overflowY: "scroll" }}>
         <div style={{ margin: 50 }}>
@@ -233,11 +258,22 @@ const ChatRoomComponent: React.FC<{ id: string }> = ({ id }) => {
           value={inputMessage}
           onChange={handleInputMessage}
           onPressEnter={handleNewMessageInput}
-          addonAfter={<Button disabled={inputMessage.trim() === ""} size="small" style={{ backgroundColor: "#FAFAFA", border: "none" }} icon={<SendOutlined />} onClick={handleNewMessageInput} />}
+          addonAfter={
+            <Button
+              disabled={inputMessage.trim() === ""}
+              size="small"
+              style={{ backgroundColor: "#FAFAFA", border: "none" }}
+              icon={<SendOutlined />}
+              onClick={handleNewMessageInput}
+            />
+          }
         />
       </footer>
       {modalVisible["add"] && showAddModal()}
       {modalVisible["delete"] && showDeleteModal()}
+      {enableVideo && (
+        <VideoComponent username={username} roomId={id} handleDisconnectUserVideo={handleDisconnectUserVideo} />
+      )}
     </div>
   );
 };

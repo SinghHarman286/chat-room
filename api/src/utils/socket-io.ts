@@ -1,5 +1,5 @@
 import axios from "axios";
-import http, { createServer } from "http";
+import http from "http";
 import { Server, Socket } from "socket.io";
 
 const PORT = process.env.PORT || 4000;
@@ -12,15 +12,50 @@ const socketConnection = (server: http.Server) => {
   });
 
   const currentUser: { [userId: string]: string } = {};
+  const usersInVideo: Record<string, string[]> = {};
+  const socketToRoom: Record<string, string> = {};
 
   // triggerd whenever a new client connects with the socket
   io.on("connection", (socket: Socket) => {
-    socket.on("join", ({ userId, socketId }) => {
+    socket.on("join", ({ userId, socketId }: { userId: string; socketId: string }) => {
       // listen to join event and store the userId and respective socketId
       // in the hasmap currentUser and joins that socketId
       currentUser[userId] = socketId;
       socket.join(socketId);
     });
+
+    socket.on("join-video-room", (roomId: string) => {
+      if (usersInVideo[roomId]) {
+        usersInVideo[roomId].push(socket.id);
+      } else {
+        usersInVideo[roomId] = [socket.id];
+      }
+      socketToRoom[socket.id] = roomId;
+      const usersInThisRoom = usersInVideo[roomId].filter((id: string) => id !== socket.id);
+      socket.emit("users-in-room", usersInThisRoom);
+    });
+
+    socket.on("send-signal", (payload) => {
+      io.to(payload.userToSignal).emit("user-joined", { signal: payload.signal, callerID: payload.callerID });
+    });
+
+    socket.on("return-signal", (payload) => {
+      io.to(payload.callerID).emit("receive-returned-signal", { signal: payload.signal, id: socket.id });
+    });
+
+    socket.on("disconnect-video", () => {
+      const roomId = socketToRoom[socket.id];
+      let room = usersInVideo[roomId];
+      delete socketToRoom[socket.id];
+      if (room) {
+        room = room.filter((id: any) => id !== socket.id);
+        usersInVideo[roomId] = room;
+        for (const user of room) {
+          io.to(user).emit("user-left", { id: socket.id });
+        }
+      }
+    });
+
     socket.once("get-room", async ({ token, userId, body }) => {
       // listens to get-room event and forward request with userId and token to the route
       try {
@@ -109,31 +144,46 @@ const socketConnection = (server: http.Server) => {
       } catch (err) {}
     });
 
-    socket.once("post-message", async ({ token, message, userId, username, roomId }: { token: string; message: string; userId: string; username: string; roomId: string }) => {
-      // listens to the event 'post-message' and forward the request to a route with message, userId, username
-      // and roomId
-      try {
-        const response = await axios.post(
-          `http://localhost:${PORT}/api/chat/newMessage`,
-          {
-            message,
-            userId,
-            username,
-            roomId,
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
+    socket.once(
+      "post-message",
+      async ({
+        token,
+        message,
+        userId,
+        username,
+        roomId,
+      }: {
+        token: string;
+        message: string;
+        userId: string;
+        username: string;
+        roomId: string;
+      }) => {
+        // listens to the event 'post-message' and forward the request to a route with message, userId, username
+        // and roomId
+        try {
+          const response = await axios.post(
+            `http://localhost:${PORT}/api/chat/newMessage`,
+            {
+              message,
+              userId,
+              username,
+              roomId,
             },
-          }
-        );
-        // emits 'recieve-message' with the response data
-        io.emit("recieve-message", { data: response.data, roomId });
-      } catch (err) {
-        console.log(err);
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          // emits 'recieve-message' with the response data
+          io.emit("recieve-message", { data: response.data, roomId });
+        } catch (err) {
+          console.log(err);
+        }
       }
-    });
+    );
   });
 };
 
